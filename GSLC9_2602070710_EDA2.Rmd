@@ -1,0 +1,76 @@
+---
+title: "GSLC"
+output: html_document
+date: "2023-05-23"
+---
+
+```{r setup, include=FALSE}
+ship <- read.csv("C:/Users/user/Downloads/archive (1)/shipping_ecommerce.csv")
+ship
+
+cor(ship$Customer_rating,ship$Customer_care_calls,method = "pearson")
+cor(ship$Customer_rating,ship$Prior_purchases,method= "pearson")
+cor(ship$Customer_rating,ship$Discount_offered,method= "pearson")
+cor(ship$Customer_rating,ship$Weight_in_gms,method= "pearson")
+cor(ship$Customer_rating,ship$Class,method= "pearson")
+
+```{r}
+summary(ship)
+t.test(ship$Customer_rating,ship$Customer_care_calls)
+ansari.test(ship$Customer_rating,ship$Customer_care_calls)
+bartlett.test(ship$Customer_rating,ship$Customer_care_calls)
+
+```
+```{r}
+library(party)
+
+# Ubah variabel categorical ke factor
+ship$Mode_of_Shipment <- as.factor(ship$Mode_of_Shipment)
+ship$Customer_rating <- as.factor(ship$Customer_rating)
+ship$Discount_offered <- as.factor(ship$Discount_offered)
+ship$Customer_care_calls <- as.factor(ship$Customer_care_calls)
+ship$Prior_purchases <- as.factor(ship$Prior_purchases)
+
+print(head(ship))
+
+#Acak data
+set.seed(123)
+shuffle_index <- sample(nrow(ship))
+ship_shuffled <- ship[shuffle_index, ]
+
+# Pecah data menjadi training dan testing
+train_indices <- 1:floor(0.7 * nrow(ship_shuffled))
+train_data <- ship_shuffled[train_indices, ]
+test_data <- ship_shuffled[-train_indices, ]
+
+# Buat desicion tree dengan data training
+output.tree <- ctree(Customer_rating ~ Mode_of_Shipment + Discount_offered + Customer_care_calls + Prior_purchases, data = train_data)
+
+print(output.tree)
+
+# Pilih bagian data yang mau di uji
+testing_data <- ship[106:150, ]
+
+# Prediksi rating pelanggan dengan desicion tree
+predictions <- predict(output.tree, newdata = testing_data, type = "response")
+
+# Buat data perbandingan
+comparison <- data.frame(
+  Customer_rating = testing_data$Customer_rating,
+  Discount_offered = testing_data$Discount_offered,
+  Customer_care_calls = testing_data$Customer_care_calls,
+  Prior_purchases = testing_data$Prior_purchases,
+  Predicted_Customer_rating = predictions
+)
+print(comparison)
+
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
